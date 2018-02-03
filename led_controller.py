@@ -6,8 +6,16 @@ PORT = 5577              # The same port as used by the server
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.connect((HOST, PORT))
 
+
 # Say hello. This same greeting seems to be used for every connection
 s.send('818a8b96'.decode('hex'))
+
+data = s.recv(1024)
+print 'Received', repr(data)
+
+
+
+s.send('71230fa3')
 
 data = s.recv(1024)
 print 'Received', repr(data)
