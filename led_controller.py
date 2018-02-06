@@ -1,4 +1,5 @@
 import socket
+import time
 
 
 HOST = '192.168.1.147'    # The remote host
@@ -14,8 +15,16 @@ data = s.recv(1024)
 print 'Received', repr(data)
 
 
+# on
+s.send('71230fa3'.decode('hex'))
 
-s.send('71230fa3')
+data = s.recv(1024)
+print 'Received', repr(data)
+
+time.sleep(5)
+
+# off
+s.send('71240fa4'.decode('hex'))
 
 data = s.recv(1024)
 print 'Received', repr(data)
