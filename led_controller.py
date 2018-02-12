@@ -7,27 +7,22 @@ PORT = 5577              # The same port as used by the server
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.connect((HOST, PORT))
 
+def cmd(hex_str):
+	s.send(hex_str.decode('hex'))
+	data = s.recv(1024)
+	print 'Received', repr(data)
 
 # Say hello. This same greeting seems to be used for every connection
-s.send('818a8b96'.decode('hex'))
-
-data = s.recv(1024)
-print 'Received', repr(data)
+cmd('818a8b96')
 
 
 # on
-s.send('71230fa3'.decode('hex'))
-
-data = s.recv(1024)
-print 'Received', repr(data)
+cmd('71230fa3')
 
 time.sleep(5)
 
 # off
-s.send('71240fa4'.decode('hex'))
-
-data = s.recv(1024)
-print 'Received', repr(data)
+cmd('71240fa4')
 
 s.close()
 # 81:04$a:01:10:ff:ff:ff:ff:04:00:00:1b
