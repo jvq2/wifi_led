@@ -15,14 +15,17 @@ def cmd(hex_str):
 # Say hello. This same greeting seems to be used for every connection
 cmd('818a8b96')
 
+# setting a color
+cmd('31f1f1f1ff000f12')
+
 
 # on
-cmd('71230fa3')
+# cmd('71230fa3')
 
-time.sleep(5)
+# time.sleep(5)
 
 # off
-cmd('71240fa4')
+# cmd('71240fa4')
 
 s.close()
 # 81:04$a:01:10:ff:ff:ff:ff:04:00:00:1b
