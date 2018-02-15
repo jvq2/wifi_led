@@ -2,25 +2,31 @@ import socket
 import time
 
 
-HOST = '192.168.1.147'    # The remote host
-PORT = 5577              # The same port as used by the server
-s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-s.connect((HOST, PORT))
-
 def cmd(hex_str):
 	s.send(hex_str.decode('hex'))
 	data = s.recv(1024)
 	print 'Received', repr(data)
 
+
+def hello():
+	return cmd('818a8b96')
+
+
+HOST = '192.168.1.147'    # The remote host
+PORT = 5577              # The same port as used by the server
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+s.connect((HOST, PORT))
+
 # Say hello. This same greeting seems to be used for every connection
-cmd('818a8b96')
+# cmd('818a8b96')
+hello()
 
 # setting a color
 cmd('31f1f1f1ff000f12')
 
 
 # on
-# cmd('71230fa3')
+cmd('71230fa3')
 
 # time.sleep(5)
 
