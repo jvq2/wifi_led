@@ -11,6 +11,9 @@ def cmd(hex_str):
 def hello():
 	return cmd('818a8b96')
 
+def on():
+	return cmd('71230fa3')
+
 
 HOST = '192.168.1.147'    # The remote host
 PORT = 5577              # The same port as used by the server
@@ -26,7 +29,7 @@ cmd('31f1f1f1ff000f12')
 
 
 # on
-cmd('71230fa3')
+on()
 
 # time.sleep(5)
 
