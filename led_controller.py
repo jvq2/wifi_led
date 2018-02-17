@@ -14,6 +14,9 @@ def hello():
 def on():
 	return cmd('71230fa3')
 
+def off():
+	return cmd('71240fa4')
+
 
 HOST = '192.168.1.147'    # The remote host
 PORT = 5577              # The same port as used by the server
@@ -25,16 +28,17 @@ s.connect((HOST, PORT))
 hello()
 
 # setting a color
-cmd('31f1f1f1ff000f12')
+# cmd('31f1f1f1ff000f12')
 
 
 # on
 on()
 
-# time.sleep(5)
+time.sleep(5)
 
 # off
 # cmd('71240fa4')
+off()
 
 s.close()
 # 81:04$a:01:10:ff:ff:ff:ff:04:00:00:1b
