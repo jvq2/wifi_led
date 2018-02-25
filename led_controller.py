@@ -2,11 +2,13 @@ import socket
 import time
 
 
-def cmd(hex_str):
+def send(hex_str):
 	s.send(hex_str.decode('hex'))
+
+def cmd(hex_str):
+	send(hex_str)
 	data = s.recv(1024)
 	print 'Received', repr(data)
-
 
 def hello():
 	return cmd('818a8b96')
@@ -68,11 +70,11 @@ hello()
 # on
 on()
 
-time.sleep(5)
+# time.sleep(5)
 
 # off
 # cmd('71240fa4')
-off()
+# off()
 
 s.close()
 # 81:04$a:01:10:ff:ff:ff:ff:04:00:00:1b
