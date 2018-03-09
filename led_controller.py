@@ -6,19 +6,21 @@ def send(hex_str):
 	s.send(hex_str.decode('hex'))
 
 def cmd(hex_str):
+	hex_str += calc_checksum(hex_str)
 	send(hex_str)
 	data = s.recv(1024)
 	print 'Received', repr(data)
+	return data
 
 def hello():
-	return cmd('818a8b96')
+	return cmd('818a8b')
 
 def on():
-	return cmd('71230fa3')
+	return cmd('71230f')
 	# response is f0:71:23:84
 
 def off():
-	return cmd('71240fa4')
+	return cmd('71240f')
 	# response is f0:71:24:85
 
 def rgbw(r, g, b, w):
@@ -50,8 +52,17 @@ def rgbw(r, g, b, w):
 
 	# 31:00:00:00:ff:00:0f:3f
 	# 31:00:00:00:00:00:0f:40
-	return cmd('31''fdfdfd''ff''000f36')
+	# return cmd('31''fdfdfd''ff''000f36')
+	hx = '31{r}{g}{b}{w}000f'.format(r=r, g=g, b=b, w=w)
+	return cmd(hx)
 	# response 30
+
+def calc_checksum(hex_str):
+	total = 0
+	for i in range(0, len(hex_str), 2):
+		total += int(hex_str[i:i+2], 16)
+	return hex(total)[-2:]
+
 
 
 HOST = '192.168.1.147'    # The remote host
