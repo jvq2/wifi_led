@@ -5,6 +5,12 @@ import time
 def send(hex_str):
 	s.send(hex_str.decode('hex'))
 
+def calc_checksum(hex_str):
+	total = 0
+	for i in range(0, len(hex_str), 2):
+		total += int(hex_str[i:i+2], 16)
+	return hex(total)[-2:]
+
 def cmd(hex_str):
 	hex_str += calc_checksum(hex_str)
 	send(hex_str)
@@ -24,44 +30,9 @@ def off():
 	# response is f0:71:24:85
 
 def rgbw(r, g, b, w):
-	# 31:fd:fd:fd:ff:00:0f:36
-	# 31:f7:f7:f7:ff:00:0f:24
-	# 31:f4:f4:f4:ff:00:0f:1b
-	# 31:f3:f3:f3:ff:00:0f:18
-	# 31:f2:f2:f2:ff:00:0f:15
-	# 31:f1:f1:f1:ff:00:0f:12
-	# 31:f0:f0:f0:ff:00:0f:0f  <--- middle
-	# 31:f5:f5:f5:ff:00:0f:1e
-	# 31:fa:fa:fa:ff:00:0f:2d
-	# 31:fe:fe:fe:ff:00:0f:39
-	# 31:ff:ff:ff:ff:00:0f:3c
-
-	# 31:06:06:06:ff:00:0f:51
-	# 31:01:01:01:ff:00:0f:42
-	# 31:00:00:00:ff:00:0f:3f
-
-	# 31:fc:fc:fc:ff:00:0f:33
-	# 31:fe:fe:fe:ff:00:0f:39
-	# 31:fb:fb:fb:ff:00:0f:30:31:f9:f9:f9:ff:00:0f:2a   <--- wtf
-	# 31:f7:f7:f7:ff:00:0f:24
-	# 31:f3:f3:f3:ff:00:0f:18
-	# 31:ef:ef:ef:ff:00:0f:0c
-	# 31:e8:e8:e8:ff:00:0f:f7
-	# 31:e7:e7:e7:ff:00:0f:f4
-	# ...
-
-	# 31:00:00:00:ff:00:0f:3f
-	# 31:00:00:00:00:00:0f:40
-	# return cmd('31''fdfdfd''ff''000f36')
 	hx = '31{r}{g}{b}{w}000f'.format(r=r, g=g, b=b, w=w)
 	return cmd(hx)
 	# response 30
-
-def calc_checksum(hex_str):
-	total = 0
-	for i in range(0, len(hex_str), 2):
-		total += int(hex_str[i:i+2], 16)
-	return hex(total)[-2:]
 
 
 
