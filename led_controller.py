@@ -10,7 +10,6 @@ class LEDController():
 	def __init__(self):
 		self._socket = None
 
-
 	def connect(self, host, port):
 		self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		self._socket.connect((host, port))
@@ -21,6 +20,19 @@ class LEDController():
 	def send(self, hex_str):
 		self._socket.send(hex_str.decode('hex'))
 
+	def receive(self):
+		data = b''
+
+		while True:
+			part = self._socket.recv(1024)
+			data += part
+
+			if len(part) < 1024:
+				break
+
+		print 'Received', repr(data)
+		return data
+
 	def calc_checksum(self, hex_str):
 		total = 0
 		for i in range(0, len(hex_str), 2):
@@ -30,8 +42,7 @@ class LEDController():
 	def cmd(self, hex_str):
 		hex_str += self.calc_checksum(hex_str)
 		self.send(hex_str)
-		data = self._socket.recv(1024)
-		print 'Received', repr(data)
+		data = self.receive()
 		return data
 
 	def hello(self):
@@ -64,11 +75,11 @@ controller.hello()
 # on
 controller.on()
 
-# time.sleep(5)
+time.sleep(5)
 
 # off
 # cmd('71240fa4')
-# controller.off()
+controller.off()
 
 controller.close()
 # 81:04$a:01:10:ff:ff:ff:ff:04:00:00:1b
