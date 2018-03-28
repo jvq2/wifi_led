@@ -2,9 +2,6 @@ import socket
 import time
 
 
-HOST = '192.168.1.147'
-PORT = 5577
-
 class LEDController():
 
 	def __init__(self):
@@ -61,27 +58,19 @@ class LEDController():
 		return self.cmd(hex_str)
 		# response 30
 
-controller = LEDController()
-controller.connect(HOST, PORT)
 
-# Say hello. This same greeting seems to be used for every connection
-# cmd('818a8b96')
-controller.hello()
+if __name__ == '__main__':
+	controller = LEDController()
 
-# setting a color
-# cmd('31f1f1f1ff000f12')
+	controller.connect('192.168.1.147', 5577)
+	controller.hello()
 
+	controller.on()
+	time.sleep(5)
+	controller.off()
 
-# on
-controller.on()
+	controller.close()
 
-time.sleep(5)
-
-# off
-# cmd('71240fa4')
-controller.off()
-
-controller.close()
 # 81:04$a:01:10:ff:ff:ff:ff:04:00:00:1b
 # \x81\x04$a\x01\x10\xff\xff\xff\xff\x04\x00\x00\x1b
 
