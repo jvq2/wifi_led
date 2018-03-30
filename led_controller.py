@@ -14,10 +14,10 @@ class LEDController():
 	def close(self):
 		self._socket.close()
 
-	def send(self, hex_str):
+	def _send(self, hex_str):
 		self._socket.send(hex_str.decode('hex'))
 
-	def receive(self):
+	def _receive(self):
 		data = b''
 
 		while True:
@@ -30,16 +30,16 @@ class LEDController():
 		print 'Received', repr(data)
 		return data
 
-	def calc_checksum(self, hex_str):
+	def _calc_checksum(self, hex_str):
 		total = 0
 		for i in range(0, len(hex_str), 2):
 			total += int(hex_str[i:i+2], 16)
 		return hex(total)[-2:]
 
 	def cmd(self, hex_str):
-		hex_str += self.calc_checksum(hex_str)
-		self.send(hex_str)
-		data = self.receive()
+		hex_str += self._calc_checksum(hex_str)
+		self._send(hex_str)
+		data = self._receive()
 		return data
 
 	def hello(self):
