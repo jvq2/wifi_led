@@ -6,6 +6,11 @@ class LEDController():
 
 	def __init__(self):
 		self._socket = None
+		self.on = False
+		self.r = 0
+		self.g = 0
+		self.b = 0
+		self.w = 0
 
 	def connect(self, host, port):
 		self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -36,7 +41,28 @@ class LEDController():
 			total += int(hex_str[i:i+2], 16)
 		return hex(total)[-2:]
 
-	def cmd(self, hex_str):
+	def _parse_hello(self, data):
+		# \x81\x04$a\x01\x08\xf1\xf1\xf1\xff\x04\x00\x00\xe9 - off
+		# \x81\x04#a\x01\x08\xf1\xf1\xf1\xff\x04\x00\x00\xe8 - on
+		self.on = data[2] == 35
+		self.r = data[6]
+		self.g = data[7]
+		self.b = data[8]
+		self.w = data[9]
+
+	def _byte_str_to_list(self, data):
+		return [ord(char) for char in data]
+
+	def _parse_response(self, data):
+		commands = {'\x81': self._parse_hello}
+		prefix = data[0]
+
+		command = commands.get(prefix, None)
+		data = self._byte_str_to_list(data)
+		if command is not None:
+			command(data)
+
+	def send_cmd(self, hex_str):
 		hex_str += self._calc_checksum(hex_str)
 		self._send(hex_str)
 		data = self._receive()
