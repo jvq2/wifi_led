@@ -1,5 +1,5 @@
+import argparse
 import socket
-import time
 
 
 class LEDController():
@@ -118,15 +118,47 @@ class LEDController():
 		return self.send_cmd(hex_str)
 		# response 30
 
+def parse_args():
+	parser = argparse.ArgumentParser()
+	parser.add_argument('r', type=int, default=None, nargs='?', help='Numerical red value between 0 and 255')
+	parser.add_argument('g', type=int, default=None, nargs='?', help='Numerical green value between 0 and 255')
+	parser.add_argument('b', type=int, default=None, nargs='?', help='Numerical blue value between 0 and 255')
+	parser.add_argument('w', type=int, default=None, nargs='?', help='Numerical white value between 0 and 255')
+	parser.add_argument('--on', action='store_true', help='Turns the light on')
+	parser.add_argument('--off', action='store_true', help='Turns the light off')
+	parser.add_argument('--toggle', action='store_true', help='Switches the light on if it\'s off and off if it\'s on')
+	parser.add_argument('--get', action='store_true', help='Reads out the current light status')
+	return parser.parse_args()
 
 if __name__ == '__main__':
+	args = parse_args()
 	controller = LEDController()
 
 	controller.connect('192.168.1.147', 5577)
 
-	controller.power_on()
-	# time.sleep(5)
-	# controller.power_off()
+	if args.on:
+		controller.power_on()
+
+	if args.off:
+		controller.power_off()
+
+	if args.get:
+		status = controller.on and 'on' or 'off'
+		print '{}\t{}\t{}\t{}\t{}'.format(
+			status, controller.r, controller.g, controller.b, controller.w)
+
+	if args.toggle:
+		if controller.on:
+			controller.power_off()
+		else:
+			controller.power_on()
+
+	if args.r is not None or args.g is not None or args.b is not None or args.w is not None:
+		new_r = args.r or controller.r
+		new_g = args.g or controller.g
+		new_b = args.b or controller.b
+		new_w = args.w or controller.w
+		controller.rgbw(new_r, new_g, new_b, new_w)
 
 	controller.close()
 
