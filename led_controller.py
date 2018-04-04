@@ -1,10 +1,12 @@
+from __future__ import print_function
 import argparse
 import socket
 
 
 class LEDController():
 
-	def __init__(self):
+	def __init__(self, verbose=False):
+		self.verbose = verbose
 		self._socket = None
 		self._commands = {129: self._parse_status}
 		self._on = False
@@ -33,8 +35,21 @@ class LEDController():
 	def w(self):
 		return self._w
 
+	def _log(self, *args):
+		if self.verbose:
+			print(*args)
+
+	def _str_to_int_list(self, byte_str):
+		return [ord(char) for char in byte_str]
+
+	def _int_list_to_str(self, int_list):
+		return ''.join(chr(i) for i in int_list)
+
 	def _send(self, hex_str):
-		self._socket.send(hex_str.decode('hex'))
+		self._log('Sending:', hex_str)
+		hex_str = self._int_list_to_str(hex_str)
+		self._socket.send(hex_str)
+		# self._socket.send(hex_str.decode('hex'))
 
 	def _receive(self):
 		data = b''
@@ -46,7 +61,7 @@ class LEDController():
 			if len(part) < 1024:
 				break
 
-		print 'Received', repr(data)
+		self._log('Received', repr(data))
 		return data
 
 	def _calc_str_checksum(self, hex_str):
@@ -55,8 +70,12 @@ class LEDController():
 			total += int(hex_str[i:i+2], 16)
 		return hex(total)[-2:]
 
+	def _calc_checksum(self, int_list):
+		return int(hex(sum(int_list))[-2:], 16)
+
 	def _response_is_valid(self, data):
-		checksum = int(hex(sum(data[:-1]))[-2:], 16)
+		# checksum = int(hex(sum(data[:-1]))[-2:], 16)
+		checksum = self._calc_checksum(data[:-1])
 		return checksum == data[-1]
 
 	def _parse_status(self, data):
@@ -68,13 +87,14 @@ class LEDController():
 		self._b = data[8]
 		self._w = data[9]
 
-	def _byte_str_to_list(self, data):
-		return [ord(char) for char in data]
-
 	def _parse_response(self, data):
-		data = self._byte_str_to_list(data)
+		if data == '0':
+			self._do_nothing(data)
+			return
+
+		data = self._str_to_int_list(data)
 		if not self._response_is_valid(data):
-			print 'invalid response checksum'
+			self._log('invalid response checksum')
 			return
 
 		prefix = data[0]
@@ -83,7 +103,7 @@ class LEDController():
 		command(data)
 
 	def _do_nothing(self, data=None):
-		print 'Unrecognised response: {}'.format(data)
+		self._log('Unrecognised response: {}'.format(data))
 
 	def connect(self, host, port):
 		self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -91,76 +111,128 @@ class LEDController():
 		self.get_status()
 
 	def close(self):
+		if not self._socket:
+			self._log('No connection open to close')
+			return
+
 		self._socket.close()
 
 	def send_cmd(self, hex_str):
-		hex_str += self._calc_str_checksum(hex_str)
+		# hex_str += self._calc_str_checksum(hex_str)
+		hex_str += [self._calc_checksum(hex_str)]
 		self._send(hex_str)
 		data = self._receive()
 		self._parse_response(data)
 		return data
 
 	def get_status(self):
-		return self.send_cmd('818a8b')
+		# return self.send_cmd('818a8b')
+		return self.send_cmd([129, 138, 139])
 
 	def power_on(self):
-		return self.send_cmd('71230f')
+		# return self.send_cmd('71230f')
+		return self.send_cmd([113, 35, 15])
 		# response is f0:71:23:84
 		# [240, 113, 35, 132]
 
 	def power_off(self):
-		return self.send_cmd('71240f')
+		# return self.send_cmd('71240f')
+		return self.send_cmd([113, 36, 15])
 		# response is f0:71:24:85
 		# [240, 113, 36, 133]
 
 	def rgbw(self, r, g, b, w):
-		hex_str = '31{r}{g}{b}{w}000f'.format(r=r, g=g, b=b, w=w)
-		return self.send_cmd(hex_str)
+		# hex_str = '31{r}{g}{b}{w}000f'.format(r=r, g=g, b=b, w=w)
+		# return self.send_cmd(hex_str)
+		return self.send_cmd([49, r, g, b, w, 0, 15])
 		# response 30
+
 
 def parse_args():
 	parser = argparse.ArgumentParser()
-	parser.add_argument('r', type=int, default=None, nargs='?', help='Numerical red value between 0 and 255')
-	parser.add_argument('g', type=int, default=None, nargs='?', help='Numerical green value between 0 and 255')
-	parser.add_argument('b', type=int, default=None, nargs='?', help='Numerical blue value between 0 and 255')
-	parser.add_argument('w', type=int, default=None, nargs='?', help='Numerical white value between 0 and 255')
-	parser.add_argument('--on', action='store_true', help='Turns the light on')
-	parser.add_argument('--off', action='store_true', help='Turns the light off')
-	parser.add_argument('--toggle', action='store_true', help='Switches the light on if it\'s off and off if it\'s on')
-	parser.add_argument('--get', action='store_true', help='Reads out the current light status')
+	parser.add_argument('--host', default='192.168.1.147', help='The host name or ip address of the light')
+	parser.add_argument('--port', type=int, default=5577, help='The port number')
+	parser.add_argument('--verbose', action='store_true', help='Be noisier')
+
+	subparsers = parser.add_subparsers(dest="cmd", help='help for subcommand')
+
+	rgbw_parser = subparsers.add_parser('rgbw', help='rgbw help')
+	rgbw_parser.add_argument('r', type=int, default=None, help='Numerical red value between 0 and 255')
+	rgbw_parser.add_argument('g', type=int, default=None, help='Numerical green value between 0 and 255')
+	rgbw_parser.add_argument('b', type=int, default=None, help='Numerical blue value between 0 and 255')
+	rgbw_parser.add_argument('w', type=int, default=None, nargs='?', help='Numerical white value between 0 and 255')
+	rgbw_parser.set_defaults(func=parse_rgbw)
+
+	state_parser = subparsers.add_parser('status', help='status help')
+	state_parser.set_defaults(func=parse_status)
+
+	on_parser = subparsers.add_parser('on', help='on help')
+	on_parser.set_defaults(func=parse_on)
+
+	off_parser = subparsers.add_parser('off', help='off help')
+	off_parser.set_defaults(func=parse_off)
+
+	toggle_parser = subparsers.add_parser('toggle', help='toggle help')
+	toggle_parser.set_defaults(func=parse_toggle)
+
 	return parser.parse_args()
+
+
+def parse_rgbw(ctrl, args):
+	r = args.r
+	g = args.g
+	b = args.b
+	w = args.w
+
+	if r is None:
+		r = ctrl.r
+
+	if g is None:
+		g = ctrl.g
+
+	if b is None:
+		b = ctrl.b
+
+	if w is None:
+		w = ctrl.w
+
+	print(r)
+	print(g)
+	print(b)
+	print(w)
+	ctrl.rgbw(r, g, b, w)
+
+
+def parse_status(ctrl, args):
+	status = ctrl.on and 'on' or 'off'
+	print('{}\t{}\t{}\t{}\t{}'.format(status, ctrl.r, ctrl.g, ctrl.b, ctrl.w))
+
+
+def parse_on(ctrl, args):
+	ctrl.power_on()
+
+
+def parse_off(ctrl, args):
+	ctrl.power_off()
+
+
+def parse_toggle(ctrl, args):
+	if ctrl.on:
+		ctrl.power_off()
+	else:
+		ctrl.power_on()
+
 
 if __name__ == '__main__':
 	args = parse_args()
-	controller = LEDController()
 
-	controller.connect('192.168.1.147', 5577)
+	controller = LEDController(verbose=args.verbose)
+	controller.connect(args.host, args.port)
 
-	if args.on:
-		controller.power_on()
-
-	if args.off:
-		controller.power_off()
-
-	if args.get:
-		status = controller.on and 'on' or 'off'
-		print '{}\t{}\t{}\t{}\t{}'.format(
-			status, controller.r, controller.g, controller.b, controller.w)
-
-	if args.toggle:
-		if controller.on:
-			controller.power_off()
-		else:
-			controller.power_on()
-
-	if args.r is not None or args.g is not None or args.b is not None or args.w is not None:
-		new_r = args.r or controller.r
-		new_g = args.g or controller.g
-		new_b = args.b or controller.b
-		new_w = args.w or controller.w
-		controller.rgbw(new_r, new_g, new_b, new_w)
+	args.func(controller, args)
 
 	controller.close()
+
 
 # 81:04$a:01:10:ff:ff:ff:ff:04:00:00:1b
 # \x81\x04$a\x01\x10\xff\xff\xff\xff\x04\x00\x00\x1b
