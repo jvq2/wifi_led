@@ -64,17 +64,13 @@ class LEDController():
 		self._log('Received', repr(data))
 		return data
 
-	def _calc_str_checksum(self, hex_str):
-		total = 0
-		for i in range(0, len(hex_str), 2):
-			total += int(hex_str[i:i+2], 16)
-		return hex(total)[-2:]
-
 	def _calc_checksum(self, int_list):
 		return int(hex(sum(int_list))[-2:], 16)
 
 	def _response_is_valid(self, data):
-		# checksum = int(hex(sum(data[:-1]))[-2:], 16)
+		if data == [48]:
+			return True
+
 		checksum = self._calc_checksum(data[:-1])
 		return checksum == data[-1]
 
@@ -88,10 +84,6 @@ class LEDController():
 		self._w = data[9]
 
 	def _parse_response(self, data):
-		if data == '0':
-			self._do_nothing(data)
-			return
-
 		data = self._str_to_int_list(data)
 		if not self._response_is_valid(data):
 			self._log('invalid response checksum')
@@ -118,7 +110,6 @@ class LEDController():
 		self._socket.close()
 
 	def send_cmd(self, hex_str):
-		# hex_str += self._calc_str_checksum(hex_str)
 		hex_str += [self._calc_checksum(hex_str)]
 		self._send(hex_str)
 		data = self._receive()
@@ -126,24 +117,23 @@ class LEDController():
 		return data
 
 	def get_status(self):
-		# return self.send_cmd('818a8b')
+		# 818a8b
 		return self.send_cmd([129, 138, 139])
 
 	def power_on(self):
-		# return self.send_cmd('71230f')
+		# 71230f
 		return self.send_cmd([113, 35, 15])
 		# response is f0:71:23:84
 		# [240, 113, 35, 132]
 
 	def power_off(self):
-		# return self.send_cmd('71240f')
+		# 71240f
 		return self.send_cmd([113, 36, 15])
 		# response is f0:71:24:85
 		# [240, 113, 36, 133]
 
 	def rgbw(self, r, g, b, w):
-		# hex_str = '31{r}{g}{b}{w}000f'.format(r=r, g=g, b=b, w=w)
-		# return self.send_cmd(hex_str)
+		# 31{r}{g}{b}{w}000f
 		return self.send_cmd([49, r, g, b, w, 0, 15])
 		# response 30
 
