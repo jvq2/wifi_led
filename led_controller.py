@@ -8,7 +8,10 @@ class LEDController():
 	def __init__(self, verbose=False):
 		self.verbose = verbose
 		self._socket = None
-		self._commands = {129: self._parse_status}
+		self._commands = {
+			129: self._parse_status,
+			240: self._parse_power
+		}
 		self._on = False
 		self._r = 0
 		self._g = 0
@@ -49,7 +52,6 @@ class LEDController():
 		self._log('Sending:', hex_str)
 		hex_str = self._int_list_to_str(hex_str)
 		self._socket.send(hex_str)
-		# self._socket.send(hex_str.decode('hex'))
 
 	def _receive(self):
 		data = b''
@@ -61,7 +63,6 @@ class LEDController():
 			if len(part) < 1024:
 				break
 
-		self._log('Received', repr(data))
 		return data
 
 	def _calc_checksum(self, int_list):
@@ -83,8 +84,14 @@ class LEDController():
 		self._b = data[8]
 		self._w = data[9]
 
+	def _parse_power(self, data):
+		# [240, 113, 35, 132] - on
+		# [240, 113, 36, 133] - off
+		self._on = data[2] == 35
+
 	def _parse_response(self, data):
 		data = self._str_to_int_list(data)
+		self._log('Received', repr(data))
 		if not self._response_is_valid(data):
 			self._log('invalid response checksum')
 			return
